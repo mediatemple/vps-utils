@@ -1,0 +1,17 @@
+This script will go through /var/www/ and scan each directory for vulnerable 
+timthumb.php scripts. They can either be named timthumb.php or thumb.php
+
+This will check the version it's currently running and if it's less than 
+2.8 it will take in the old cache directory of the script and try 
+to replace it in the new one it's replacing it with.
+
+You should end up with an extra file called timthumb.php.old which 
+will contain all of your old information.
+
+To run this do the following
+
+user@remote:~/$ python timthumb-vps.py --log ~/timthumb.log
+
+You can always run with --help to get help.
+
+By default this will log to /var/log/timthumb.log
