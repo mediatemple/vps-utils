@@ -2,7 +2,7 @@
 # This tool is to find any version of timthumb older than 
 # 2.8 (The one vulnerable to remote file injection)
 # This is to be ran on any host that has it's own dedicated 
-# /var/www/vhosts is the starting point but can be modified for 
+# /var/www/ is the starting point but can be modified for 
 # your own purposes. This can be modified by anyone for any purpose
 # they see fit for their needs
 import os, sys, re, urllib, shutil
