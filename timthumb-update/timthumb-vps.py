@@ -9,42 +9,63 @@ import os, sys, re, urllib, shutil
 from stat import *
 import fileinput
 import getopt
-
+version = 0.2 
 def walktree(top, log, debug):
     for f in os.listdir(top):
         if debug:
             print 'Working with %s' % f
         pathname = os.path.join(top, f)
-        if os.path.isdir(pathname):
-            # It's a directory, recurse into it
-            walktree(pathname, log, debug)
-        elif os.path.isfile(pathname):
-            # It's a file, let's see if it is what we're looking for 
-            regex = re.compile('thumb.php$')
-            if ( re.search(regex, pathname) ):
-                if debug:
-                    print "Found %s\n" % pathname
-                for line in open(pathname):
-                    if "VERSION" in line:
-                        match = re.search('(?<=VERSION....)\d\.\d+', line)
-                        if match:
-                            version = match.group(0)
-                            print 'Version is %s\n' % version
-                            if float(version) < 2.8:
-                                if debug:
-                                    print "What what we have a winner\n"
-                                logfile = open(log, 'a')
-                                logfile.write(pathname)
-                                logfile.write(' version ')
-                                logfile.write(version)
-                                logfile.write('\n')
-                                replace_timthumb(pathname, log, debug)
-                            else:
-                                if debug:
-                                    print 'Newer than we need' 
-        else:
-            # Unknown file type, print a message
-            print 'Skipping %s' % pathname
+        mode = os.lstat(pathname).st_mode
+        # Don't following symlinks
+        if not S_ISLNK(mode):
+            # Recurse into directories
+            if os.path.isdir(pathname):
+                walktree(pathname, log, debug)
+            # Get info on files
+            elif os.path.isfile(pathname):
+                regex = re.compile('thumb.php$')
+                if ( re.search(regex, pathname) ):
+                    if debug:
+                        print "Found %s\n" % pathname
+                    for line in open(pathname):
+                        itsit = 0
+                        foundver = 0
+                        # If it's actually the timthumb script set a flag saying we've found it
+                        if "TimThumb" in line:
+                            itsit = 1
+                        # Analyze version and break once we've done so
+                        if "VERSION" in line:
+                            match = re.search('(?<=VERSION....)\d\.\d+', line)
+                            if match:
+                                version = match.group(0)
+                                print 'Version is %s\n' % version
+                                if float(version) < 2.8:
+                                    if debug:
+                                        print "Found older timthumb\n"
+                                    logfile = open(log, 'a')
+                                    logfile.write(pathname)
+                                    logfile.write(' version ')
+                                    logfile.write(version)
+                                    logfile.write('\n')
+                                    replace_timthumb(pathname, log, debug)
+                                else:
+                                    if debug:
+                                        print 'Newer than we need' 
+                                break
+                            foundver = 1
+                    # In the event that we've found it and it didn't have a version, report it
+                    # This even occurs when the version is so old it didn't store it. 
+                    if itsit and not foundver:
+                           logfile = open(log, 'a')
+                           logfile.write(pathname)
+                           logfile.write(' ')
+                           logfile.write('0\n')
+                           print "It's it, but doesn't have a version"
+                           itsit = 0
+                           foundver = 0                 
+            else:
+                # Unknown file type, print a message
+                print 'Skipping %s' % pathname
 
 
 def replace_timthumb(path, log, debug):
