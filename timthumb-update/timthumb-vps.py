@@ -18,6 +18,8 @@ def walktree(top, log, debug):
         mode = os.lstat(pathname).st_mode
         # Don't following symlinks
         if not S_ISLNK(mode):
+            itsit = 0
+            foundver = 0
             # Recurse into directories
             if os.path.isdir(pathname):
                 walktree(pathname, log, debug)
@@ -28,8 +30,6 @@ def walktree(top, log, debug):
                     if debug:
                         print "Found %s\n" % pathname
                     for line in open(pathname):
-                        itsit = 0
-                        foundver = 0
                         # If it's actually the timthumb script set a flag saying we've found it
                         if "TimThumb" in line:
                             itsit = 1
@@ -51,16 +51,18 @@ def walktree(top, log, debug):
                                 else:
                                     if debug:
                                         print 'Newer than we need' 
+                                foundver = 1
                                 break
-                            foundver = 1
                     # In the event that we've found it and it didn't have a version, report it
                     # This even occurs when the version is so old it didn't store it. 
-                    if itsit and not foundver:
+                    if itsit:
+                        if not foundver:
                            logfile = open(log, 'a')
                            logfile.write(pathname)
                            logfile.write(' ')
                            logfile.write('0\n')
                            print "It's it, but doesn't have a version"
+                           replace_timthumb(pathname, log, debug)
                            itsit = 0
                            foundver = 0                 
             else:
